@@ -11,7 +11,14 @@ programs.
 You don't need any OSC knowledge to use this package.
 
 [Instructions]
-Copy nsmclient.py into your source directory and 
+Copy nsmclient.py into your source directory or use
+	python3 setup.py install 
+to install nsmclient.py system-wide. Both variants are equally good. 
+Just copying it to your own source tree does not require your users 
+to install nsmclient themselves. Since this is a really small lib I 
+recommend this approach.
+ 
+ In your own program:
 	import nsmclient
 	
 Then call nsmclient.init() with the correct parameters.
