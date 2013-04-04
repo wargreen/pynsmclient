@@ -61,7 +61,7 @@ messages and queues outgoing ones. See the bottom of this example client
 #All capabilities default to False. Just change one value to True if you program can do that.
 capabilities = {
 	"switch" : False,		#client is capable of responding to multiple `open` messages without restarting
-	"dirty" : True, 		#client knows when it has unsaved changes
+	"dirty" : False, 		#client knows when it has unsaved changes
 	"progress" : False,		#client can send progress updates during time-consuming operations
 	"message" : False, 		#client can send textual status updates
 	"optional-gui" : False,	#client has an optional GUI	
