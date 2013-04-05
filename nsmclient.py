@@ -119,7 +119,7 @@ class OurNsmClient(object):
 		
 
 	def openFile(self, path, argList, types):
-		#TODO: send errors
+		#TODO: send real errors with error codes
 		"""/nsm/client/open s:path_to_instance_specific_project s:display_name s:client_id
 		
 		A response is REQUIRED as soon as the open operation has been
@@ -128,15 +128,14 @@ class OurNsmClient(object):
 		"""	
 		
 		self.states.pathBeginning, self.states.prettyNSMName, self.states.clientId = argList				
-		loadState, loadMessage = self.function_open(self.states.pathBeginning) #Call the user function		
+		loadState, fileNameOrLoadMessage = self.function_open(self.states.pathBeginning, self.states.clientId) #Call the user function		
 		if loadState:
-			liblo.send(states.nsmUrl, "/reply", "/nsm/client/open", " ".join([self.states.pathBeginning, "successfully opened"]))
+			liblo.send(states.nsmUrl, "/reply", "/nsm/client/open", " ".join([self.states.pathBeginning+"/"+fileNameOrLoadMessage, "successfully opened"]))
 		else: #the string indicates the error.
-			liblo.send(states.nsmUrl, "/error", "/nsm/client/open", " ".join([self.states.pathBeginning, "not loaded. Error:", loadMessage]))
-		
+			liblo.send(states.nsmUrl, "/error", "/nsm/client/open", -1, " ".join(["Not loaded. Error:", fileNameOrLoadMessage]))
 
 	def saveFile(self, path, argList, types):
-		#TODO: send errors
+		#TODO: send real errors with error codes
 		"""/nsm/client/save
 		
 		This message will only be delivered after a previous open
@@ -145,12 +144,13 @@ class OurNsmClient(object):
 		
 		argList is empty, types is empty. 
 		"""
-		saveState, saveMessage = self.function_save(self.states.pathBeginning) #Call the user function
+		saveState, fileNameOrSaveMessage = self.function_save(self.states.pathBeginning) #Call the user function
 		if saveState:			
-			liblo.send(states.nsmUrl, "/reply", "/nsm/client/open", " ".join([self.states.pathBeginning, "successfully saved"]))			
-			self.setDirty(False)
-		else: #the string indicates the error.
-			liblo.send(states.nsmUrl, "/error", "/nsm/client/open", " ".join([self.states.pathBeginning, "not saved. Error:", saveMessage]))
+			liblo.send(states.nsmUrl, "/reply", "/nsm/client/save", " ".join([self.states.pathBeginning+"/"+fileNameOrSaveMessage, "successfully saved"]))			
+			self.setDirty(False, internal=True)
+		else: #the string indicates the error.			
+			print (" ".join(["Not saved. Error:", fileNameOrSaveMessage]))
+			liblo.send(states.nsmUrl, "/error", "/nsm/client/save", -1, " ".join(["Not saved. Error:", fileNameOrSaveMessage]))
 
 	def isLoaded(*args):
 		"""No parameters"""
@@ -169,11 +169,11 @@ class OurNsmClient(object):
 		relay the information to the user.
 		"""
 		if "progress" in states.clientCapabilities:			
-			liblo.send(states.nsmUrl, "/nsm/client/gui_is_shown", float(progressValue))	
+			liblo.send(states.nsmUrl, "/nsm/client/progress", float(progressValue))	
 		else:
 			print ("Warning. You tried to send a progress update but did not initialize your NSM client with the 'progress' capability.	Message not sent. Get rid of this warning by setting the capability flag or remove the progress update")
 	
-	def setDirty(self, trueOrFalse):
+	def setDirty(self, trueOrFalse, internal = False):
 		"""/nsm/client/progress f:progress
 		
 		/nsm/client/is_dirty
@@ -192,7 +192,8 @@ class OurNsmClient(object):
 				liblo.send(states.nsmUrl, "/nsm/client/is_clean")	
 			
 		else:
-			print ("Warning. You tried to send a dirty/clean update but did not initialize your NSM client with the 'dirty' capability.	Message not sent. Get rid of this warning by setting the capability flag or remove the dirty update")
+			if not internal:
+				print ("Warning. You tried to send a dirty/clean update but did not initialize your NSM client with the 'dirty' capability.	Message not sent. Get rid of this warning by setting the capability flag to True or remove the dirty update")
 	
 	def sendStatusMessage(self, message, priority = 0):	
 		"""/nsm/client/message i:priority s:message
@@ -205,7 +206,7 @@ class OurNsmClient(object):
 		if "message" in states.clientCapabilities:
 			liblo.send(states.nsmUrl, "/nsm/client/message", int(priority), str(message))
 		else:
-			print ("Warning. You tried to send a status message but did not initialize your NSM client with the 'message' capability. Message not sent. Get rid of this warning by setting the capability flag or remove the message update")
+			print ("Warning. You tried to send a status message but did not initialize your NSM client with the 'message' capability. Message not sent. Get rid of this warning by setting the capability flag to True or remove the message update")
 	
 	#GUI	
 	def showGui(self, *args):
@@ -261,9 +262,8 @@ class OurNsmClient(object):
 		The user function does not need to exit itself. 
 		Just shutdown audio engines etc. 
 		If function quit is just pass it will still quit."""
-		self.function_quit()		
-		exit()		
-
+		self.function_quit()				
+		exit(0)
 
 states = States(os.getenv("NSM_URL"))
 ourNsmClient = OurNsmClient(states)	

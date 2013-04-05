@@ -69,26 +69,34 @@ capabilities = {
 
 #requiredFunctions
 """
-The open and save functions must accept one parameter: The beginning 
-of a path. NSM never creates directories or paths. It is up to you 
-what you do with the path. Append your file extension or use it as a 
-directory (the directory approach is recommended). You only have to 
-remember your naming scheme and use it every time. For example it is 
-save, if your program is in session mode, to always just use 
-"receivedPath/session.yourExtension" since it will be a unique path. 
-The important part is that the filename, once after it was created, 
-must never change again. 
+The save function must accept one parameter and the open two: 
+First: The beginning of a path. NSM never creates directories or paths.
+It is up to you what you do with the path. Append your file 
+extension or use it as a directory (the directory approach is 
+recommended). You only have to remember your naming scheme and use 
+it every time. For example it is save, if your program is in session 
+mode, to always just use "receivedPath/session.yourExtension" since 
+it will be a unique path. The important part is that the filename, 
+once after it was created, must never change again. 
+
+Second: Open must accept a clientId parameter in the second position.
+JackPorts must be created only after open was called and prefixed
+with this clientId.
+Since open can reload other states (Switching clients) this is done
+after open, and not through the nsm welcome message.
 
 Open and Save must return two values:
 	return Bool,String
 Bool is True or False, depending if the open function succeeded or 
-not. String is a message string which will be used to inform nsm and 
-the used what exactly went wrong (file unreadable, wrong format 
-etc.).
-So please include all needed 
-information. If open/save was fine choose a good 
-message anyway. Maybe it will be used in future 
-versions of this python module.  
+not. 
+
+If True: string is just the file name WITHOUT the path. 
+It will be extended by nsmclient and a "/path/foo.save successful",
+save or open, message will be given out.
+
+If False: string is a message  which will be used to inform nsm and 
+the user what exactly went wrong (file unreadable, wrong format 
+etc.). Please include all needed information including the full filepath.
 
 Important: Do not register any JACK clients and ports before a file 
 was opened. After open you get ourNsmClient.states.clientId which 
@@ -101,7 +109,7 @@ anything that pauses the save process.
 
 	
 requiredFunctions = {
-	"function_open" : myLoadFunction, #Accept one parameter. Return two values. A bool and a status string. Otherwise you'll get a message that does not help at all: "Exception TypeError: "'NoneType' object is not iterable" in 'liblo._callback' ignored"
+	"function_open" : myLoadFunction, #Accept two parameters. Return two values. A bool and a status string. Otherwise you'll get a message that does not help at all: "Exception TypeError: "'NoneType' object is not iterable" in 'liblo._callback' ignored"
 	"function_save" : mySaveFunction, #Accept one parameter. Return two values. A bool and a status string. Otherwise you'll get a message that does not help at all: "Exception TypeError: "'NoneType' object is not iterable" in 'liblo._callback' ignored"					
 	}
 
