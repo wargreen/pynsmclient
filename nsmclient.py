@@ -286,7 +286,14 @@ def init(prettyName, capabilities, requiredFunctions, optionalFunctions, sleepVa
 
     #Finally tell NSM we are ready and start the main loop
     #__file__ stands for the executable name
-    liblo.send(states.nsmUrl, NSM_ANNOUNCE, prettyName, capabilitiesString, __main__.__file__, API_VERSION_MAJOR, API_VERSION_MINOR, os.getpid())
+    print (os.path.dirname(__main__.__file__), os.environ["PATH"])
+    if os.path.dirname(__main__.__file__) in os.environ["PATH"]:
+        executableName = os.path.basename(__main__.__file__)
+    else:
+        executableName = os.path.abspath(__main__.__file__)
+    print (executableName)
+
+    liblo.send(states.nsmUrl, NSM_ANNOUNCE, prettyName, capabilitiesString, executableName, API_VERSION_MAJOR, API_VERSION_MINOR, os.getpid())
 
     #Wait for the welcome message.
     while not states.welcomeMessage:
