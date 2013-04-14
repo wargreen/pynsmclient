@@ -43,6 +43,7 @@ class States(object):
         self.welcomeMessage = self.sessionManagerName = None #set by ourNsmClient.welcome()
         self.nsmCapabilities = set() #set by ourNsmClient.welcome(). You can test it with "if capability in self.nsmCapabilities:"
         self.pathBeginning =  self.prettyNSMName = self.clientId = None # set by ourNsmClient.openFile()
+        self.lastDirtyState = False #Everything is clean and shiny in the beginning.
 
 class OurNsmClient(object):
     def __init__(self, states):
@@ -185,10 +186,14 @@ class OurNsmClient(object):
         capability string.
         """
         if "dirty" in states.clientCapabilities:
-            if trueOrFalse:
+            if trueOrFalse and states.lastDirtyState is False:
+                states.lastDirtyState = True
                 liblo.send(states.nsmUrl, "/nsm/client/is_dirty")
-            else:
+            elif (not trueOrFalse) and states.lastDirtyState is True:
+                states.lastDirtyState = False
                 liblo.send(states.nsmUrl, "/nsm/client/is_clean")
+            #else: #whatever it was, we were already at this state. Just ignore
+            #    pass
 
         else:
             if not internal:
@@ -273,6 +278,10 @@ def init(prettyName, capabilities, requiredFunctions, optionalFunctions, sleepVa
     The reported filepath to load and more depends on this. Changing
     this is like telling NSM we are a different program now.
     """
+    if not states.nsmUrl:
+        raise RuntimeError("Non-Session-Manager environment variable $NSM_URL not found. Only start this program through a session manager")
+        exit(1)
+
     canDo = [key for key,value in capabilities.items() if value]
     capabilitiesString = ":".join([""] + canDo + [""]) if canDo else ""
     states.clientCapabilities = set(canDo)
