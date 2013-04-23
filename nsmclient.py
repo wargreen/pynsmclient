@@ -133,6 +133,9 @@ class OurNsmClient(object):
             liblo.send(states.nsmUrl, "/reply", "/nsm/client/open", " ".join([self.states.pathBeginning+"/"+fileNameOrLoadMessage, "successfully opened"]))
         else: #the string indicates the error.
             liblo.send(states.nsmUrl, "/error", "/nsm/client/open", -1, " ".join(["Not loaded. Error:", fileNameOrLoadMessage]))
+            os.kill (os.getpid(), SIGKILL) #Somehow a SIGTERM here gets ignored.
+            #this can go wrong if the quit-hook user function tries to shutdown things which have not been initialized yet. For example the jack engine which is by definition started AFTER nsm-open
+
 
     def saveFile(self, path, argList, types):
         #TODO: send real errors with error codes
@@ -212,6 +215,10 @@ class OurNsmClient(object):
         else:
             print ("Warning. You tried to send a status message but did not initialize your NSM client with the 'message' capability. Message not sent. Get rid of this warning by setting the capability flag to True or remove the message update")
 
+    def setLabel(self, label):
+        """Set the label in the NSM gui"""
+        liblo.send(states.nsmUrl, "/nsm/client/label", str(label))
+
     #GUI
     def showGui(self, *args):
         """Only execute if the server has the capabilities to handle
@@ -240,11 +247,11 @@ class OurNsmClient(object):
         """
         devNull, errorCode, errorMessage = args
         if args[1] == -2: #ERR_INCOMPATIBLE_API
-            self.function_quit()
+            #self.function_quit()
             self.sendError(-2, "Incompatible API. Client shuts down itself")
             os.kill (os.getpid(), SIGKILL) #Somehow a SIGTERM here gets ignored.
         elif args[1] == -3: #ERR_BLACKLISTED
-            self.function_quit()
+            #self.function_quit()
             self.sendError(-2, "Client black listed. Client shuts down itself")
             os.kill (os.getpid(), SIGKILL) #Somehow a SIGTERM here gets ignored.
         else:
@@ -272,7 +279,7 @@ class OurNsmClient(object):
 states = States(os.getenv("NSM_URL"))
 ourNsmClient = OurNsmClient(states)
 
-def init(prettyName, capabilities, requiredFunctions, optionalFunctions, sleepValueMs):
+def init(prettyName, capabilities, requiredFunctions, optionalFunctions, sleepValueMs, startsWithGui = True):
     """prettyName = "Super Client"
     Never change the prettyName after your software is ready to use.
     The reported filepath to load and more depends on this. Changing
@@ -312,7 +319,12 @@ def init(prettyName, capabilities, requiredFunctions, optionalFunctions, sleepVa
             ourNsmClient.function_showGui() #call once. All other osc calls in ourNsmClient will get ignored automatically.
             liblo.send(states.nsmUrl, "/nsm/client/gui_is_shown")
         else:
-            liblo.send(states.nsmUrl, "/nsm/client/gui_is_hidden")
+            if startsWithGui:
+                ourNsmClient.function_showGui()
+                liblo.send(states.nsmUrl, "/nsm/client/gui_is_shown")
+            else:
+                ourNsmClient.function_hideGui()
+                liblo.send(states.nsmUrl, "/nsm/client/gui_is_hidden")
 
 
     return ourNsmClient, lambda: ourNsmClient.libloServer.recv(sleepValueMs) #loop and dispatch messages every 100ms
