@@ -1,7 +1,7 @@
 # Intro
-
 Based on https://github.com/hilbrichtsoftware/pynsmclient
 Yes, it should be deprecated, but the OSC server implementation in pynsm2 isn't complete.
+This version will be integrate nonOSMnat (https://github.com/wargreen/nonOSCnat).
 
 Python nsmclient
 Version 0.2 - Jan 2017
@@ -9,13 +9,13 @@ Authors: Nils Gey ich@nilsgey.de http://www.nilsgey.de, Wargreen wargreen@lebib.
 Non Session Manager Author: Jonathan Moore Liles  <male@tuxfamily.org> http://non.tuxfamily.org/nsm/
 
 
-[Purpose]
+## Purpose
 Python nsmclient is a convenience wrapper around liblo and NSM-OSC
 syntax to implement Non Session support easily in your own Python
 programs.
 You don't need any OSC knowledge to use this package.
 
-[Instructions]
+## Instructions
 Copy nsmclient.py into your source directory or use
     python3 setup.py install
 to install nsmclient.py system-wide. Both variants are equally good.
@@ -33,7 +33,7 @@ Only 30 lines of code.
 The important part is that your application follows the NSM rules
 (see example.py documentation and nsm website http://non.tuxfamily.org/nsm/API.html)
 
-[Dependencies]
+## Dependencies
 * Non-Session Manager http://non.tuxfamily.org/nsm/
 * liblo (tested with version 0.26) http://liblo.sourceforge.net/
 * pyliblo - Python 3 bindings for liblo. (tested with version 0.9.1) http://das.nasophon.de/pyliblo/
