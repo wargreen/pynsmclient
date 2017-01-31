@@ -44,8 +44,21 @@ class States(object):
         self.nsmCapabilities = set() #set by ourNsmClient.welcome(). You can test it with "if capability in self.nsmCapabilities:"
         self.pathBeginning =  self.prettyNSMName = self.clientId = None # set by ourNsmClient.openFile()
         self.lastDirtyState = False #Everything is clean and shiny in the beginning.
+        self.nonPeer = False # set if ou client is a Non-daw peer. Include pyNONpeer.py
 
 class OurNsmClient(object):
+    
+    methods = {"/reply" : (None, self.welcome), # TODO : change reply handling
+               "/error" : (None, self.receiveError),
+               "/nsm/client/open" : (None, self.openFile),
+               "/nsm/client/save" : (None, self.saveFile),
+               "/nsm/client/session_is_loaded" : (None, self.isLoaded),
+               "/nsm/client/show_optional_gui" : (None, self.showGui),
+               "/nsm/client/hide_optional_gui" : (None, self.hideGui)
+               }
+    
+    registered_methods = {}
+    
     def __init__(self, states):
         #Functions to re-implement
         #Obligatory functios
@@ -61,13 +74,15 @@ class OurNsmClient(object):
         #Add functions to our osc server that receives from NSM.
         signal(SIGTERM, self._signal_handler) #NSM sends SIGTERM. Nothing more.
         self.libloServer = liblo.Server() #I hope that is a random, free, port
-        self.libloServer.add_method("/reply", None, self.welcome) # NSM Welcome Message
-        self.libloServer.add_method("/error", None, self.receiveError) # NSM Error messages
-        self.libloServer.add_method("/nsm/client/open", None, self.openFile)
-        self.libloServer.add_method("/nsm/client/save", None, self.saveFile)
-        self.libloServer.add_method("/nsm/client/session_is_loaded", None, self.isLoaded)
-        self.libloServer.add_method("/nsm/client/show_optional_gui", None, self.showGui)
-        self.libloServer.add_method("/nsm/client/hide_optional_gui", None, self.hideGui)
+        
+        self.methodAdder(methods)
+        #self.libloServer.add_method("/reply", None, self.welcome) # NSM Welcome Message
+        #self.libloServer.add_method("/error", None, self.receiveError) # NSM Error messages
+        #self.libloServer.add_method("/nsm/client/open", None, self.openFile)
+        #self.libloServer.add_method("/nsm/client/save", None, self.saveFile)
+        #self.libloServer.add_method("/nsm/client/session_is_loaded", None, self.isLoaded)
+        #self.libloServer.add_method("/nsm/client/show_optional_gui", None, self.showGui)
+        #self.libloServer.add_method("/nsm/client/hide_optional_gui", None, self.hideGui)
 
         #For your information. There are function which can just be called directly:
         #ourNsmClient.updateProgress(value from 0.1 to 1.0) #give percentage during load, save and other heavy operations
@@ -99,10 +114,28 @@ class OurNsmClient(object):
 
         self.libloServer.add_method(None, None, self.fallback) # register a fallback for unhandled messages
         self.states = states #A shortcut to the global states
-
+    
+    def methodAdder(self, methods):
+        """ Add liblo methods """
+        for p, a in methods.item():
+            if not in registered_methods :
+                self.libloServer.add_method (p, a[0], a[1])
+                registered_methods[p] = a[1]
+            else :
+                except:
+                    print("Try to add " + p + " but it's already registered !")
 
     def nothing(*args):
         return True, "Fine"
+        
+    def replyHandler(self, path, argList, types):
+        """ Handle and dispatch /reply from NSM server"""
+        #if arglist[0] in registered_methods:
+        try:
+            callback = registered_methods[arglist[0]]
+            callback(path, argList, types)
+        except:
+            print("Unknown /reply method : " path, argList)
 
     def welcome(self, path, argList, types):
         """/reply "/nsm/server/announce" s:message s:name_of_session_manager s:capabilities
