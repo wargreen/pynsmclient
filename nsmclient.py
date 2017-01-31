@@ -48,16 +48,8 @@ class States(object):
 
 class OurNsmClient(object):
     
-    methods = {"/reply" : (None, self.welcome), # TODO : change reply handling
-               "/error" : (None, self.receiveError),
-               "/nsm/client/open" : (None, self.openFile),
-               "/nsm/client/save" : (None, self.saveFile),
-               "/nsm/client/session_is_loaded" : (None, self.isLoaded),
-               "/nsm/client/show_optional_gui" : (None, self.showGui),
-               "/nsm/client/hide_optional_gui" : (None, self.hideGui)
-               }
-    
-    registered_methods = {}
+        
+    registered_methods = {}    
     
     def __init__(self, states):
         #Functions to re-implement
@@ -70,6 +62,16 @@ class OurNsmClient(object):
         self.function_showGui = self.nothing
         self.function_hideGui = self.nothing
         self.function_sessionIsLoaded = self.nothing
+        
+        methods = {"/reply" : (None, self.welcome), # TODO : change reply handling
+                   "/error" : (None, self.receiveError),
+                   "/nsm/client/open" : (None, self.openFile),
+                   "/nsm/client/save" : (None, self.saveFile),
+                   "/nsm/client/session_is_loaded" : (None, self.isLoaded),
+                   "/nsm/client/show_optional_gui" : (None, self.showGui),
+                   "/nsm/client/hide_optional_gui" : (None, self.hideGui),
+                   "/nsm/server/announce" : (None, self.welcome)
+                   }
 
         #Add functions to our osc server that receives from NSM.
         signal(SIGTERM, self._signal_handler) #NSM sends SIGTERM. Nothing more.
@@ -117,25 +119,26 @@ class OurNsmClient(object):
     
     def methodAdder(self, methods):
         """ Add liblo methods """
-        for p, a in methods.item():
-            if not in registered_methods :
+        for p, a in methods.items():
+            if p not in self.registered_methods :
                 self.libloServer.add_method (p, a[0], a[1])
-                registered_methods[p] = a[1]
+                self.registered_methods[p] = a[1]
             else :
-                except:
-                    print("Try to add " + p + " but it's already registered !")
+                print("Try to add " + p + " but it's already registered !")
 
     def nothing(*args):
         return True, "Fine"
         
     def replyHandler(self, path, argList, types):
-        """ Handle and dispatch /reply from NSM server"""
+        """ Handle and dispatch /reply from NSM server.
+            Call the original function of the reply, with a /reply path"""
         #if arglist[0] in registered_methods:
         try:
             callback = registered_methods[arglist[0]]
+            #del argList[0]
             callback(path, argList, types)
         except:
-            print("Unknown /reply method : " path, argList)
+            print("Unknown /reply method : ", path, argList)
 
     def welcome(self, path, argList, types):
         """/reply "/nsm/server/announce" s:message s:name_of_session_manager s:capabilities
