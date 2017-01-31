@@ -1,14 +1,10 @@
-# DEPRECATED! USE VERSION 2 INSTEAD
-This library exists only for documentation reasons and other obscure intentions.
-If you want your python program to have non-session-manager support please use
-https://github.com/hilbrichtsoftware/pynsm2
-
-
-# old readme
+[Intro]
+Based on https://github.com/hilbrichtsoftware/pynsmclient
+Yes, it should be deprecated, but the OSC server implementation in pynsm2 isn't complete.
 
 Python nsmclient
-Version 0.1 - April 2013
-Author: Nils Gey ich@nilsgey.de http://www.nilsgey.de
+Version 0.2 - Jan 2017
+Authors: Nils Gey ich@nilsgey.de http://www.nilsgey.de, Wargreen wargreen@lebib.org
 Non Session Manager Author: Jonathan Moore Liles  <male@tuxfamily.org> http://non.tuxfamily.org/nsm/
 
 
